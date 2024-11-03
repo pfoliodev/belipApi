@@ -103,6 +103,45 @@ class DatabaseManager:
         self.cursor.execute("SELECT COUNT(*) FROM bornes")
         return self.cursor.fetchone()[0]
 
+    def get_all_stations(self):
+        try:
+            query = "SELECT id, nom, adresse, latitude, longitude FROM stations"
+            self.cursor.execute(query)
+            return self.cursor.fetchall()
+        except mysql.connector.Error as err:
+            print(f"Erreur lors de la récupération des stations: {err}")
+            return []
+
+    def get_stations_geojson(self):
+        try:
+            query = "SELECT id, nom, adresse, latitude, longitude FROM stations"
+            self.cursor.execute(query)
+            stations = self.cursor.fetchall()
+
+            features = []
+            for station in stations:
+                feature = {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [station[4], station[3]]  # [longitude, latitude]
+                    },
+                    "properties": {
+                        "id": station[0],
+                        "nom": station[1],
+                        "adresse": station[2]
+                    }
+                }
+                features.append(feature)
+
+            return {
+                "type": "FeatureCollection",
+                "features": features
+            }
+        except mysql.connector.Error as err:
+            print(f"Erreur lors de la récupération des stations: {err}")
+            return None
+
     def close(self):
         if self.connection.is_connected():
             self.cursor.close()

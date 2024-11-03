@@ -1,58 +1,30 @@
-from data.api_client import get_belib_data
+from fastapi import FastAPI, Request
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from database.db_manager import DatabaseManager
 
+app = FastAPI()
 
-def main():
-    data = get_belib_data()
+# Monter les fichiers statiques
+# app.mount("/static", StaticFiles(directory="static"), name="static")
 
-    if not data or 'records' not in data:
-        print("Aucune donnée n'a été récupérée ou le format des données est incorrect.")
-        return
+# Configurer les templates
+templates = Jinja2Templates(directory="templates")
 
-    with DatabaseManager() as db_manager:
-        db_manager.create_tables()
 
-        stations_count = 0
-        bornes_count = 0
+# Route pour servir la page HTML
+@app.get("/")
+async def read_root(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 
-        for record in data['records']:
-            # Insérer la station
-            station_id = db_manager.insert_station(record)
-            if station_id:
-                stations_count += 1
-
-                # Traiter les bornes
-                fields = record['fields']
-                prise_types = [
-                    ('prise_type_2', 'Type 2'),
-                    ('prise_type_3', 'Type 3'),
-                    ('prise_type_chademo', 'CHAdeMO'),
-                    ('prise_type_combo_ccs', 'Combo CCS'),
-                    ('prise_type_ef', 'EF'),
-                    ('prise_type_autre', 'Autre')
-                ]
-
-                for field, prise_type in prise_types:
-                    if fields.get(field) == 'True':
-                        borne_data = {
-                            'type': prise_type,
-                            'puissance': fields.get('puissance_nominale', 0)
-                        }
-                        db_manager.insert_borne(station_id, borne_data)
-                        bornes_count += 1
-
-        print(f"Nombre de stations insérées : {stations_count}")
-        print(f"Nombre de bornes insérées : {bornes_count}")
-
-        # Vérification finale dans la base de données
-        db_manager.cursor.execute("SELECT COUNT(*) FROM stations")
-        db_stations_count = db_manager.cursor.fetchone()[0]
-        db_manager.cursor.execute("SELECT COUNT(*) FROM bornes")
-        db_bornes_count = db_manager.cursor.fetchone()[0]
-
-        print(f"Nombre de stations dans la base de données : {db_stations_count}")
-        print(f"Nombre de bornes dans la base de données : {db_bornes_count}")
-
+# Route pour obtenir les données GeoJSON
+@app.get("/api/stations")
+async def get_stations():
+    with DatabaseManager() as db:
+        geojson_data = db.get_stations_geojson()
+    return geojson_data
 
 if __name__ == "__main__":
-    main()
+    import uvicorn
+    # Lancer le serveur
+    uvicorn.run(app, host="0.0.0.0", port=8000)
