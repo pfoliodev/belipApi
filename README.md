@@ -6,7 +6,7 @@ Yutopia project for Belib API - Data course
 I used a virtual environment to run the project.
 To create the virtual environment, run the following command:
 ```bash
-python -m venv venv
+python3 -m venv venv
 ```
 To activate the venv, run the following command:
 ```bash
@@ -24,3 +24,6 @@ To insert data into the database, you can run the insertData.py script.
 
 ## API
 You can now run the main.py script to start the API.
+```bash
+python3 main.py
+```

@@ -9,13 +9,8 @@ def get_belib_data():
         response.raise_for_status()
         data = response.json()
 
-        print(f"Nombre total de records: {len(data.get('records', []))}")
-
         if data['records']:
-            print("Structure d'un enregistrement:")
-            print(json.dumps(data['records'][0], indent=2))
 
-            print("\nChamps disponibles dans le premier enregistrement:")
             for key in data['records'][0]['fields'].keys():
                 print(f"- {key}")
 
@@ -29,10 +24,6 @@ def get_belib_data():
 
                 # Afficher quelques champs supplémentaires pour plus d'informations
                 fields = record['fields']
-                print(f"  Nom de la station: {fields.get('nom_station', 'Non spécifié')}")
-                print(f"  Adresse: {fields.get('adresse_station', 'Non spécifiée')}")
-                print(f"  Nombre de points de charge: {fields.get('nbre_pdc', 'Non spécifié')}")
-                print("  Types de prises disponibles:")
                 for prise_type in ['prise_type_2', 'prise_type_3', 'prise_type_chademo', 'prise_type_combo_ccs', 'prise_type_ef']:
                     if fields.get(prise_type) == 'True':
                         print(f"    - {prise_type}")
